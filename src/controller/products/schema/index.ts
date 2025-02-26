@@ -4,7 +4,9 @@ import { z } from "zod";
 export const createProductSchema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().optional(),
-  price: z.number().positive("Price must be a positive number"),
+  price: z.string().refine((val) => !isNaN(Number(val)), {
+    message: "Price must be a number",
+  }),
   isActive: z.boolean().optional().default(true),
 });
 
@@ -25,5 +27,10 @@ export const paginationSchema = z.object({
     .refine((val) => !isNaN(Number(val)), {
       message: "Limit must be a number",
     }),
-  isActive: z.boolean().optional(),
+  isActive: z
+    .string()
+    .optional()
+    .transform((val) =>
+      val === "true" ? true : val === "false" ? false : undefined
+    ),
 });

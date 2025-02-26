@@ -28,7 +28,7 @@ This is a sample project demonstrating how to build a RESTful API using **Hono**
 
 Before running the project, ensure you have the following installed:
 
-- [Node.js](https://nodejs.org/) (v18 or higher)
+- [Bun](https://bun.sh/) (latest version)
 - [PostgreSQL](https://www.postgresql.org/) (or a Supabase database)
 - [Supabase CLI](https://supabase.com/docs/guides/cli) (optional, for local Supabase setup)
 
@@ -41,14 +41,12 @@ Before running the project, ensure you have the following installed:
     ```bash
     git clone https://github.com/LaithMahdi/example_hono_drizzle_orm_supabase.git
     cd example_hono_drizzle_orm_supabase
-
     ```
 
 2.  **Install Dependencies**
 
     ```bash
-    npm install
-
+    bun install
     ```
 
 3.  **Set Up Environment Variables**
@@ -59,7 +57,6 @@ Before running the project, ensure you have the following installed:
     DATABASE_URL="postgres://user:password@localhost:5432/dbname"
     SUPABASE_URL="https://your-supabase-url.supabase.co"
     SUPABASE_KEY="your-supabase-anon-key"
-
     ```
 
     Replace the placeholders with your actual database and Supabase credentials.
@@ -69,16 +66,14 @@ Before running the project, ensure you have the following installed:
     Apply the database schema using Drizzle ORM:
 
     ```bash
-    npm run db:push
-
+    bun run db:push
     ```
 
     Alternatively, you can generate and run migrations:
 
     ```bash
-    npm run db:generate
-    npm run db:migrate
-
+    bun run db:generate
+    bun run db:migrate
     ```
 
 5.  **Seed the Database (Optional)**
@@ -86,8 +81,7 @@ Before running the project, ensure you have the following installed:
     If you want to seed the database with sample data, run:
 
     ```bash
-    npm run db:seed
-
+    bun run db:seed
     ```
 
 ---
@@ -97,8 +91,7 @@ Before running the project, ensure you have the following installed:
 1.  **Start the Development Server**
 
     ```bash
-    npm run dev
-
+    bun run dev
     ```
 
     The server will start at `http://localhost:3000`.
@@ -124,7 +117,6 @@ Before running the project, ensure you have the following installed:
 
   ```bash
   curl "http://localhost:3000/api/v1/products/all?page=1&limit=10&isActive=true"
-
   ```
 
 - **Response**:
@@ -155,7 +147,6 @@ Before running the project, ensure you have the following installed:
 
   ```bash
   curl "http://localhost:3000/api/v1/products/1"
-
   ```
 
 - **Response**:
@@ -170,6 +161,87 @@ Before running the project, ensure you have the following installed:
   }
   ```
 
+### 3. **Create a Product**
+
+- **Endpoint**: `POST /products`
+- **Request Body**:
+
+  ```json
+  {
+    "name": "New Product",
+    "description": "Product description",
+    "price": 29.99,
+    "isActive": true
+  }
+  ```
+
+- **Response**:
+
+  ```json
+  {
+    "id": 2,
+    "name": "New Product",
+    "description": "Product description",
+    "price": 29.99,
+    "isActive": true
+  }
+  ```
+
+### 4. **Update a Product**
+
+- **Endpoint**: `PUT /products/:id`
+- **Request Body**:
+
+  ```json
+  {
+    "name": "Updated Product",
+    "price": 39.99
+  }
+  ```
+
+- **Response**:
+
+  ```json
+  {
+    "id": 1,
+    "name": "Updated Product",
+    "description": "Description for Product 1",
+    "price": 39.99,
+    "isActive": true
+  }
+  ```
+
+### 5. **Delete a Product**
+
+- **Endpoint**: `DELETE /products/:id`
+- **Example**:
+
+  ```bash
+  curl -X DELETE "http://localhost:3000/api/v1/products/1"
+  ```
+
+- **Response**:
+
+  ```json
+  {
+    "message": "Product deleted successfully"
+  }
+  ```
+
+---
+
+## Middleware
+
+- **Authentication Middleware**: Ensures API access is restricted to authenticated users.
+- **Error Handling Middleware**: Catches and formats API errors.
+- **Request Validation Middleware**: Uses **Zod** to validate request payloads.
+
+---
+
+## Postman Collection
+
+A Postman collection for testing the API is available [here](https://www.postman.com/your-collection-link).
+
 ---
 
 ## Contributing
@@ -180,7 +252,7 @@ Contributions are welcome! Please open an issue or submit a pull request.
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](https://chatgpt.com/c/LICENSE) file for details.
+This project is licensed under the MIT License. See the LICENSE file for details.
 
 ---
 

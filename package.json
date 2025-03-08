@@ -22,7 +22,8 @@
     "hono-openapi": "^0.4.6",
     "postgres": "^3.4.5",
     "zod": "^3.24.2",
-    "zod-openapi": "^4.2.3"
+    "zod-to-json-schema": "^3.24.3",
+    "zod-to-openapi": "^0.2.1"
   },
   "devDependencies": {
     "@types/node": "^20.11.17",

@@ -10,6 +10,21 @@ import {
   paginationSchema,
 } from "./schema";
 
+import { zodToJsonSchema } from "zod-to-json-schema";
+
+const createProductRawSchema = zodToJsonSchema(createProductSchema, {
+  name: "CreateProduct",
+});
+
+const createProductJsonSchema =
+  createProductRawSchema.definitions?.CreateProduct || {};
+
+const updateProductRawSchema = zodToJsonSchema(updateProductSchema, {
+  name: "UpdateProduct",
+});
+const updateProductJsonSchema =
+  updateProductRawSchema.definitions?.UpdateProduct || {};
+
 const app = new Hono()
   .get(
     "/all",
@@ -53,11 +68,8 @@ const app = new Hono()
       const { page: pageStr, limit: limitStr, isActive } = c.req.valid("query");
       const page = Number(pageStr);
       const limit = Number(limitStr);
-
-      // Calculate offset for pagination
       const offset = (page - 1) * limit;
 
-      // Build the query with filtering
       const query = db
         .select()
         .from(products)
@@ -70,7 +82,6 @@ const app = new Hono()
 
       const allProducts = await query.execute();
 
-      // Get total count for pagination metadata
       const totalCountQuery = await db
         .select({ count: sql<number>`count(*)` })
         .from(products)
@@ -78,19 +89,14 @@ const app = new Hono()
           isActive !== undefined ? eq(products.isActive, isActive) : undefined
         )
         .execute();
-
       const totalItems = totalCountQuery[0].count;
-
-      // Calculate pagination metadata
-      const hasPreviousPage = page > 1;
-      const hasNextPage = page * limit < totalItems;
 
       return c.json({
         data: allProducts,
         totalItems,
         pageInfo: {
-          hasPreviousPage,
-          hasNextPage,
+          hasPreviousPage: page > 1,
+          hasNextPage: page * limit < totalItems,
         },
       });
     }
@@ -109,107 +115,137 @@ const app = new Hono()
     }),
     async (c) => {
       const { id } = c.req.param();
-
-      // Convert the ID to a number and validate it
       const newID = Number(id);
-
-      // Check if the ID is a valid number and is a positive integer
       if (isNaN(newID)) {
         return c.json({ error: "Invalid ID" }, 400);
       }
-
-      // Fetch the product from the database
       const product = await db
         .select()
         .from(products)
         .where(eq(products.id, newID))
         .execute();
-
-      // Check if the product was found
       if (!product[0]) {
         return c.json({ error: "Product not found" }, 404);
       }
-
-      // Return the product
       return c.json(product[0]);
     }
   )
-  .post("/create", zValidator("json", createProductSchema), async (c) => {
-    const { name, isActive, price, description } = c.req.valid("json");
-
-    const newProduct = await db
-      .insert(products)
-      .values({
-        name,
-        isActive,
-        price: parseFloat(price),
-        description,
-      })
-      .returning();
-
-    return c.json(
-      {
-        success: true,
-        data: newProduct[0],
+  .post(
+    "/create",
+    describeRoute({
+      summary: "Create a new product",
+      tags: ["Products"],
+      description:
+        "Create a new product with the given details and return the created product details in the response body.",
+      requestBody: {
+        content: {
+          "application/json": {
+            schema: createProductJsonSchema,
+          },
+        },
       },
-      201
-    );
-  })
-  .put("/update/:id", zValidator("json", updateProductSchema), async (c) => {
-    const { id } = c.req.param();
-
-    // Convert the ID to a number
-    const newID = Number(id);
-
-    const { name, description, price, isActive } = c.req.valid("json");
-
-    if (isNaN(newID)) {
-      return c.json({ error: "Invalid ID" }, 400);
-    }
-
-    const updatedProduct = await db
-      .update(products)
-      .set({
-        name,
-        description,
-        price: parseFloat(price!),
-        isActive,
-      })
-      .where(eq(products.id, newID))
-      .returning();
-
-    if (!updatedProduct[0]) {
-      return c.json({ error: "Product not found" }, 404);
-    }
-
-    return c.json(
-      {
-        success: true,
-        data: updatedProduct[0],
+      responses: {
+        201: { description: "Successful response" },
+        400: { description: "Invalid request body" },
       },
-      200
-    );
-  })
-  .delete("/delete/:id", async (c) => {
-    const { id } = c.req.param();
-
-    // Convert the ID to a number
-    const newID = Number(id);
-
-    if (isNaN(newID)) {
-      return c.json({ error: "Invalid ID" }, 400);
+    }),
+    zValidator("json", createProductSchema),
+    async (c) => {
+      const { name, isActive, price, description } = c.req.valid("json");
+      const newProduct = await db
+        .insert(products)
+        .values({
+          name,
+          isActive,
+          price: parseFloat(price),
+          description,
+        })
+        .returning();
+      return c.json(
+        {
+          success: true,
+          data: newProduct[0],
+        },
+        201
+      );
     }
-
-    const deletedProduct = await db
-      .delete(products)
-      .where(eq(products.id, newID))
-      .returning();
-
-    if (!deletedProduct[0]) {
-      return c.json({ error: "Product not found" }, 404);
+  )
+  .put(
+    "/update/:id",
+    describeRoute({
+      summary: "Update a product",
+      tags: ["Products"],
+      description: "Update a product by its ID with the provided details.",
+      requestBody: {
+        content: {
+          "application/json": {
+            schema: updateProductJsonSchema,
+          },
+        },
+      },
+      responses: {
+        200: { description: "Product updated successfully" },
+        400: { description: "Invalid ID or request body" },
+        404: { description: "Product not found" },
+      },
+    }),
+    zValidator("json", updateProductSchema),
+    async (c) => {
+      const { id } = c.req.param();
+      const newID = Number(id);
+      if (isNaN(newID)) {
+        return c.json({ error: "Invalid ID" }, 400);
+      }
+      const { name, description, price, isActive } = c.req.valid("json");
+      const updatedProduct = await db
+        .update(products)
+        .set({
+          name,
+          description,
+          price: parseFloat(price!),
+          isActive,
+        })
+        .where(eq(products.id, newID))
+        .returning();
+      if (!updatedProduct[0]) {
+        return c.json({ error: "Product not found" }, 404);
+      }
+      return c.json(
+        {
+          success: true,
+          data: updatedProduct[0],
+        },
+        200
+      );
     }
-
-    return c.json({ message: "Product deleted successfully" }, 200);
-  });
+  )
+  .delete(
+    "/delete/:id",
+    describeRoute({
+      summary: "Delete a product",
+      tags: ["Products"],
+      description: "Delete a product by its ID",
+      responses: {
+        200: { description: "Product deleted successfully" },
+        400: { description: "Invalid ID" },
+        404: { description: "Product not found" },
+      },
+    }),
+    async (c) => {
+      const { id } = c.req.param();
+      const newID = Number(id);
+      if (isNaN(newID)) {
+        return c.json({ error: "Invalid ID" }, 400);
+      }
+      const deletedProduct = await db
+        .delete(products)
+        .where(eq(products.id, newID))
+        .returning();
+      if (!deletedProduct[0]) {
+        return c.json({ error: "Product not found" }, 404);
+      }
+      return c.json({ message: "Product deleted successfully" }, 200);
+    }
+  );
 
 export default app;

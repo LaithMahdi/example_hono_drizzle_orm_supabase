@@ -10,6 +10,8 @@ const serverSchema = z.object({
 
   SUPABASE_ANON_KEY: z.string().min(1),
   SUPABASE_URL: z.string().min(1),
+  // PORT
+  PORT: z.coerce.number().default(3000),
 });
 
 const _serverEnv = serverSchema.safeParse(process.env);
@@ -22,7 +24,7 @@ if (!_serverEnv.success) {
   throw new Error("Invalid environment variables");
 }
 
-const { DATABASE_URL, NEXT_FRONT_URL, SUPABASE_ANON_KEY, SUPABASE_URL } =
+const { DATABASE_URL, NEXT_FRONT_URL, SUPABASE_ANON_KEY, SUPABASE_URL, PORT } =
   _serverEnv.data;
 
 export const env = {
@@ -30,5 +32,6 @@ export const env = {
   NEXT_FRONT_URL,
   SUPABASE_ANON_KEY,
   SUPABASE_URL,
+  PORT,
 };
 console.log("✅ Environment variables loaded");

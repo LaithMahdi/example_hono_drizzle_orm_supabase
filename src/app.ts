@@ -9,7 +9,8 @@ import { env } from "@/dotenv_config";
 import authRoutes from "@/controller/auth/auth_controller";
 import productRoutes from "@/controller/products/product_controller";
 
-const app = new Hono()
+const app = new Hono();
+app
   .basePath("/api/v1")
   // Middlewares
   .use(
@@ -54,18 +55,20 @@ app.get(
           url: "https://opensource.org/licenses/MIT",
         },
       },
-      servers: [{ url: "http://localhost:3000/", description: "Local server" }],
+      servers: [
+        { url: `http://localhost:${env.PORT}/`, description: "Local server" },
+      ],
     },
   })
 );
 
 app.get(
-  "/docs",
+  "/api-docs",
   apiReference({
     theme: "bluePlanet",
     withDefaultFonts: true,
-    spec: { url: "http://localhost:3000/api/v1/openapi" },
-    baseServerURL: "http://localhost:3000/api/v1",
+    spec: { url: `http://localhost:${env.PORT}/openapi` },
+    baseServerURL: `http://localhost:${env.PORT}`,
     darkMode: true,
   })
 );

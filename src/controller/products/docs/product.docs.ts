@@ -89,7 +89,7 @@ export const getAllProductsDocs = describeRoute({
       in: "query",
       description: "Number of items per page (default: 10)",
       required: false,
-      schema: { type: "integer", default: 10 },
+      schema: { type: "<integer>", default: 10 },
     },
     {
       name: "isActive",
